@@ -1,0 +1,115 @@
+#include <stdio.h>
+#include <vector>
+#include <math.h>
+using namespace std;
+struct TrieNode{
+	struct TrieNode *Child[26];
+	struct TrieNode* ancestor[18];
+	int depth;
+};
+
+struct TrieNode *New_Node(struct TrieNode* root){
+	struct TrieNode *PNode = new TrieNode;
+	for(int i=0;i<26;i++)
+		PNode->Child[i]=NULL;
+	PNode->depth = 0;
+	for(int j=0;j<18;j++)
+		PNode->ancestor[j]=root;
+	return PNode;
+}
+
+struct TrieNode *insert(struct TrieNode *cur_root, char key,struct TrieNode *root){
+	int index= key -'a';
+	int depth=cur_root->depth;
+	if(!cur_root->Child[index])
+		cur_root->Child[index]=New_Node(root);
+	cur_root=cur_root->Child[index];
+	cur_root->depth=depth+1;
+	return cur_root;
+}
+
+void build_ancestor(struct TrieNode *Node,int depth,char word,struct TrieNode *ancestor_node){
+	Node->ancestor[0]=ancestor_node;
+	struct TrieNode *cur;
+	for(int k=1;k<log2(depth);k++){
+		cur=Node->ancestor[k-1];
+		Node->ancestor[k]=cur->ancestor[k-1];
+	}
+}
+
+int main(void){
+	int number;
+	char word;
+
+	struct TrieNode *root = new TrieNode;
+	for(int i=0;i<26;i++)
+		root->Child[i]=NULL;
+	root->depth = 0;
+	for(int j=0;j<18;j++)
+		root->ancestor[j]=root;
+
+	int bbb;
+	scanf("%d",&bbb);
+	vector<struct TrieNode*> address;
+	address.push_back(root);
+	for(int i=0;i<bbb;i++){
+		scanf("%d %c",&number,&word);
+		struct TrieNode *temp_root=address[number];
+		struct TrieNode *ancestor_root=temp_root;
+		temp_root=insert(temp_root,word,root);
+		build_ancestor(temp_root,temp_root->depth,word,ancestor_root);
+		address.push_back(temp_root);
+	}
+
+	int number_of_strings;
+	scanf("%d",&number_of_strings);
+	struct TrieNode *Node1;
+	struct TrieNode *Node2; 
+	vector<int> answer;
+	int depth1;
+	int depth2;
+	for(int i=0;i<number_of_strings;i++){
+		int number1;
+		int number2;
+		scanf("%d %d",&number1,&number2);
+		Node1=address[number1];
+		Node2=address[number2];
+		depth1=Node1->depth;
+		depth2=Node2->depth;
+		if(depth2>depth1){
+			int distance=depth2-depth1;
+			int k=0;
+			while(distance>0){	
+				if(distance%2)
+					Node2=Node2->ancestor[k];
+				k++;
+				distance=distance/2;
+			}
+		}
+		else if(depth2<depth1){		
+			int distance=depth1-depth2;
+			int k=0;
+			while(distance>0){	
+				if(distance%2)
+					Node1=Node1->ancestor[k];
+				k++;
+				distance=distance/2;
+			}
+		}
+		if(Node1==Node2){
+			answer.push_back(Node1->depth);
+			continue;
+		}
+		for(int n=17;n>=0;n--){
+			if(Node1->ancestor[n]!=Node2->ancestor[n]){
+				Node1=Node1->ancestor[n];
+				Node2=Node2->ancestor[n];
+			}
+		}
+		answer.push_back(Node1->depth-1);
+	}
+	
+	for(int i=0;i<answer.size();i++)
+		printf("%d\n",answer[i]);
+	return 0;
+}
